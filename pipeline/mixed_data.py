@@ -14,8 +14,7 @@ import pandas as pd
 
 def create_pipeline(
     numerical_features: List[str],
-    categorical_unord_features: List[str],
-    categorical_ord_features: List[str],
+    categorical_features: List[str],
     imputers_needed: bool = False,
     scaler: Optional[BaseEstimator] = StandardScaler(),
     oversample_needed: bool = False,
@@ -34,13 +33,9 @@ def create_pipeline(
             numerical_pipeline = Pipeline([('imputer', CustomKNNImputer(train_labels=target)), ('scaler', scaler)]) if imputers_needed else Pipeline([('scaler', scaler)])
         pipeline_steps.append(('num', numerical_pipeline, numerical_features))
 
-    if len(categorical_unord_features) > 0:
-        categorical_unord_pipeline = Pipeline([('imputer', CustomSimpleImputer(train_labels=target))]) if imputers_needed else 'passthrough'
-        pipeline_steps.append(('cat_unord', categorical_unord_pipeline, categorical_unord_features))
-
-    if len(categorical_ord_features) > 0:
+    if len(categorical_features) > 0:
         categorical_ord_pipeline = Pipeline([('imputer', CustomSimpleImputer(train_labels=target))]) if imputers_needed else 'passthrough'
-        pipeline_steps.append(('cat_ord', categorical_ord_pipeline, categorical_ord_features))
+        pipeline_steps.append(('cat', categorical_ord_pipeline, categorical_features))
 
     preprocessing = ColumnTransformer(pipeline_steps)
 
@@ -50,7 +45,7 @@ def create_pipeline(
     ]
 
     if oversample_needed:
-        pipeline_steps.append(('oversampler', SMOTE_ENC(sampling_strategy=oversampling_strategy, categorical_features=categorical_unord_features + categorical_ord_features, continuous_features=numerical_features)))
+        pipeline_steps.append(('oversampler', SMOTE_ENC(sampling_strategy=oversampling_strategy, categorical_features=categorical_features, continuous_features=numerical_features)))
         
     if undersample_needed:
         pipeline_steps.append(('undersampler', MixedEditedNearestNeighbors(sampling_strategy=undersampling_strategy)))
